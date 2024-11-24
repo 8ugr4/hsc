@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/HSC-http-status-check.iml" filepath="$PROJECT_DIR$/.idea/HSC-http-status-check.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/hsc.iml" filepath="$PROJECT_DIR$/.idea/hsc.iml" />
     </modules>
   </component>
 </project>

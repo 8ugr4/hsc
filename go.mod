@@ -1,3 +1,3 @@
-module HSC-http-status-check
+module hsc
 
 go 1.22
