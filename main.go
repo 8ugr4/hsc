@@ -5,13 +5,11 @@ import (
 	"log"
 )
 
+// @todo: add pre-commit and golangci lint.
 func main() {
-	page := "https://www.google.com"
-	auth := ""
-
-	status, err := h.Get(page, auth)
+	pages := []string{"https://www.google.com", "https://www.google.com"}
+	err := h.Get(pages, "")
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Print(status.Code, status.Text)
 }

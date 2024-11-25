@@ -5,13 +5,18 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 )
 
-var closeError = errors.New("error closing response body")
+var (
+	closeError = errors.New("error closing response body")
+	throttle   = time.Tick(time.Second)
+	empty      error
+)
 
 type Status struct {
-	Code int
-	Text string
+	Code []int
+	Text []string
 }
 
 func (s *Status) get(page, auth string) error {
@@ -19,6 +24,7 @@ func (s *Status) get(page, auth string) error {
 	var response *http.Response
 	var err error
 
+	<-throttle // wait for a tick
 	if request, err = http.NewRequest("GET", page, nil); err != nil {
 		return errors.New(fmt.Sprintf("error creating request: %s", err))
 	}
@@ -34,15 +40,26 @@ func (s *Status) get(page, auth string) error {
 		}
 	}()
 
-	s.Code, s.Text = response.StatusCode, response.Status
-
+	Store(response.StatusCode, response.Status)
 	return nil
 }
 
-func Get(page, auth string) (*Status, error) {
-	status := new(Status)
-	if err := status.get(page, auth); err != nil {
-		return nil, err
+func Get(urls []string, auth string) error {
+	for _, url := range urls {
+		status := new(Status)
+		go func() {
+			err := status.get(url, auth)
+			if err != nil {
+				empty = errors.New(fmt.Sprintf("failed to get the page: %s", err))
+			}
+		}()
 	}
-	return status, nil
+	return empty
+}
+
+func Store(statusCode int, stat string) *Status {
+	h := new(Status)
+	h.Code = append(h.Code, statusCode)
+	h.Text = append(h.Text, stat)
+	return h
 }
