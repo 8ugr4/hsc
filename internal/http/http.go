@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sync"
 	"time"
 )
 
 var (
 	closeError = errors.New("error closing response body")
 	throttle   = time.Tick(time.Second)
-	empty      error
 )
 
 type Status struct {
@@ -45,16 +45,31 @@ func (s *Status) get(page, auth string) error {
 }
 
 func Get(urls []string, auth string) error {
+	var (
+		wg            sync.WaitGroup
+		mu            sync.Mutex
+		combinedError error
+	)
+
 	for _, url := range urls {
+		wg.Add(1)
 		status := new(Status)
-		go func() {
-			err := status.get(url, auth)
-			if err != nil {
-				empty = errors.New(fmt.Sprintf("failed to get the page: %s", err))
+		go func(url string) {
+			defer wg.Done()
+			if err := status.get(url, auth); err != nil {
+				mu.Lock()
+				defer mu.Unlock()
+				if combinedError == nil {
+					combinedError = err
+				}
+			} else {
+				combinedError = fmt.Errorf("%w: %v", combinedError, err)
 			}
-		}()
+		}(url)
 	}
-	return empty
+
+	wg.Wait()
+	return combinedError
 }
 
 func Store(statusCode int, stat string) *Status {
