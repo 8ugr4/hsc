@@ -6,12 +6,10 @@ import (
 	"log"
 	"net/http"
 	"sync"
-	"time"
 )
 
 var (
 	closeError = errors.New("error closing response body")
-	throttle   = time.Tick(time.Second)
 )
 
 type Status struct {
@@ -24,7 +22,6 @@ func (s *Status) get(page, auth string) error {
 	var response *http.Response
 	var err error
 
-	<-throttle // wait for a tick
 	if request, err = http.NewRequest("GET", page, nil); err != nil {
 		return fmt.Errorf("error creating request: %s", err)
 	}
