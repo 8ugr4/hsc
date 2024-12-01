@@ -26,12 +26,12 @@ func (s *Status) get(page, auth string) error {
 
 	<-throttle // wait for a tick
 	if request, err = http.NewRequest("GET", page, nil); err != nil {
-		return errors.New(fmt.Sprintf("error creating request: %s", err))
+		return fmt.Errorf("error creating request: %s", err)
 	}
 	request.Header.Set("Authorization", "Basic "+auth)
 
 	if response, err = http.DefaultClient.Do(request); err != nil {
-		return errors.New(fmt.Sprintf("error getting response: %s", err))
+		return fmt.Errorf("error getting response: %s", err)
 	}
 
 	defer func() {
