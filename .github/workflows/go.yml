@@ -35,10 +35,13 @@ jobs:
       - name: Build
         run: go build -v ./...
 
+      - name: clean cache
+        run: go clean -modcache
+
       - name: Run tests
         run: go test -v ./...
 
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v4
+        uses: golangci/golangci-lint-action@v6
         with:
           version: v1.54.2
