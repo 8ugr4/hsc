@@ -1,6 +1,8 @@
 package http
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestStatus_get(t *testing.T) {
 	type fields struct {

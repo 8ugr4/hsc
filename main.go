@@ -8,8 +8,11 @@ import (
 // @todo: add pre-commit and golangci lint.
 func main() {
 	pages := []string{"https://www.google.com", "https://www.google.com"}
-	err := h.Get(pages, "")
+	status, err := h.Get(pages, "")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("failed:", err)
+	}
+	for index := range status.Code {
+		log.Println(status.Code[index], status.Text[index])
 	}
 }

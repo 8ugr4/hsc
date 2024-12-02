@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"sync"
+	"time"
 )
 
 var (
@@ -13,8 +14,16 @@ var (
 )
 
 type Status struct {
+	mu   sync.Mutex
 	Code []int
 	Text []string
+}
+
+func (s *Status) Add(statusCode int, statusText string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.Code = append(s.Code, statusCode)
+	s.Text = append(s.Text, statusText)
 }
 
 func (s *Status) get(page, auth string) error {
@@ -37,41 +46,31 @@ func (s *Status) get(page, auth string) error {
 		}
 	}()
 
-	Store(response.StatusCode, response.Status)
+	s.Add(response.StatusCode, http.StatusText(response.StatusCode))
 	return nil
 }
 
-func Get(urls []string, auth string) error {
+func Get(urls []string, auth string) (*Status, error) {
 	var (
-		wg            sync.WaitGroup
-		mu            sync.Mutex
-		combinedError error
+		wg     sync.WaitGroup
+		mu     sync.Mutex
+		status = &Status{}
+		errVar error
 	)
 
 	for _, url := range urls {
 		wg.Add(1)
-		status := new(Status)
 		go func(url string) {
 			defer wg.Done()
 			if err := status.get(url, auth); err != nil {
+				errVar = err
 				mu.Lock()
 				defer mu.Unlock()
-				if combinedError == nil {
-					combinedError = err
-				}
-			} else {
-				combinedError = fmt.Errorf("%w: %v", combinedError, err)
 			}
 		}(url)
+		time.Sleep(1 * time.Millisecond)
 	}
 
 	wg.Wait()
-	return combinedError
-}
-
-func Store(statusCode int, stat string) *Status {
-	h := new(Status)
-	h.Code = append(h.Code, statusCode)
-	h.Text = append(h.Text, stat)
-	return h
+	return status, errVar
 }
